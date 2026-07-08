@@ -1,0 +1,24 @@
+{
+  "name": "test_game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite --port 3000",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tsc": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "esbuild": "^0.28.1",
+    "ts-keycode-enum": "^1.0.6",
+    "ts-node": "^10.9.2",
+    "tsc-alias": "^1.9.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.3"
+  }
+}

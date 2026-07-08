@@ -1,0 +1,5 @@
+node_modules/*
+.git
+AGENTS.md
+dist/
+public/js/
