@@ -1,52 +1,57 @@
-export class Sprite {
-  x: number;
-  y: number;
-  size: number;
-  column: number;
-  row: number;
-  maxColumn: number;
-  maxRow: number;
-  speedX: number = 0;
-  speedY: number = 0;
+export class Sprite implements Sprite {
+  size?: number
+  width?: number;
+  height?: number;
+  max_column: number = 0;
+  max_row: number = 0;
   spriteSheet: HTMLImageElement;
-  constructor(opt: spriteOptions) {
-    const { x, y, size, column, row, spriteSheet } = opt;
-    this.column = column * size;
-    this.row = row * size;
+  constructor(spriteSheet: HTMLImageElement, opt: { size?: number, width?: number, height?: number }) {
+    const { size, width, height } = opt;
+    if (!size && (!width || !height))
+      throw new Error('Sprite size not defined');
     this.size = size;
+    this.width = width;
+    this.height = height;
     this.spriteSheet = spriteSheet;
-    this.x = x;
-    this.y = y;
-    this.maxColumn = this.spriteSheet.width / this.size;
-    this.maxRow = this.spriteSheet.height / this.size;
   }
-  setSpeedX(speedX: number) {
-    this.speedX = speedX;
+  get maxColumns(): number {
+    if (!this.size || !this.width)
+      return 0
+    return Math.floor(this.spriteSheet.width / (this.width ?? this.size));
   }
-  setSpeedY(speedY: number) {
-    this.speedY = speedY;
+  get maxRows(): number {
+    if (this.spriteSheet.height === 0) return 0;
+    if (!this.size || !this.height)
+      return 0
+    return Math.floor(this.spriteSheet / (this.height ?? this.size));
   }
-  setColumn(column: number) {
-    this.column = column * this.size;
+  getSpriteData(index: number) {
+    const cols = Math.floor(this.spriteSheet.width / (this.width ?? this.size));
+    if (cols === 0 && (!this.size && (!this.width || !this.height))) {
+      return { col: 0, row: 0, x: 0, y: 0, width: 0, height: 0 };
+    }
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+    return {
+      col: col * (this.width || this.size),
+      row: row * (this.height || this.size),
+      width: (this.width || this.size),
+      height: (this.height || this.size)
+    };
   }
-  setRow(row: number) {
-    this.row = row * this.size;
-  }
-  update(deltaTime: number) {
-    this.x += this.speedX;
-    this.y += this.speedY;
-  }
-  draw(context: ctx) {
+  draw(opt: { context: ctx; index: number, x: number, y: number }) {
+    const { context, index, x, y } = opt;
+    const spriteData = this.getSpriteData(index);
     context.drawImage(
       this.spriteSheet,
-      this.column,
-      this.row,
-      this.size,
-      this.size,
-      this.x,
-      this.y,
-      this.size,
-      this.size
+      spriteData.col,
+      spriteData.row,
+      spriteData.width,
+      spriteData.height,
+      x,
+      y,
+      spriteData.width,
+      spriteData.height
     );
   }
 }

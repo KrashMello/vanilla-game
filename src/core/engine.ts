@@ -35,6 +35,7 @@ export class Engine {
   }
 
   async start() {
+    //NOTE: cargamos todos los objetos requeridos antes de iniciar el motor
     await Promise.all(this.object.map((o) => o.init()));
     await this.run(0);
   }
