@@ -2,8 +2,9 @@ interface Sprite {
   size?: number;
   width?: number;
   height?: number;
-  max_column: number;
-  max_row: number;
+  maxColumnsCalc: number;
+  maxRowsCalc: number;
   spriteSheet: HTMLImageElement;
-  draw({ context: ctx, index: number, x: number, y: number }): void;
+  getSpriteData(index: number): { col: number, row: number, width: number, height: number };
+  draw(opt: { context: ctx, index: number, x: number, y: number }): void;
 }

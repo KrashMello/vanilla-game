@@ -129,16 +129,18 @@ export class Player extends Object {
     context.fillText(this.name, this.x, this.y - 8)
   }
   printLifeBar(context: ctx) {
+    const size = this.spriteSheet.sprite_size ?? this.width;
     context.fillStyle = 'gray';
-    context.fillRect(this.x, this.y - 4, this.spriteSheet.sprite_size, 3);
+    context.fillRect(this.x, this.y - 4, size, 3);
     context.fillStyle = 'green';
-    context.fillRect(this.x, this.y - 4, (this.spriteSheet.sprite_size * this.life) / this.max_life, 3);
+    context.fillRect(this.x, this.y - 4, (size * this.life) / this.max_life, 3);
   }
   printManaBar(context: ctx) {
+    const size = this.spriteSheet.sprite_size ?? this.width;
     context.fillStyle = 'gray';
-    context.fillRect(this.x, this.y, this.spriteSheet.sprite_size, 3);
+    context.fillRect(this.x, this.y, size, 3);
     context.fillStyle = 'blue';
-    context.fillRect(this.x, this.y, (this.spriteSheet.sprite_size * this.mana) / this.max_mana, 3);
+    context.fillRect(this.x, this.y, (size * this.mana) / this.max_mana, 3);
   }
   draw(context: ctx) {
     this.printName(context)

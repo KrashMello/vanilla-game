@@ -20,16 +20,16 @@ export class SpriteSheets implements SpriteSheets {
       this.width = this.spriteSheet.width;
       this.height = this.spriteSheet.height;
     }
-    this.sprite_size = sprite_size;
-    this.sprite_width = sprite_width;
-    this.sprite_height = sprite_height;
+    if (sprite_size !== undefined) this.sprite_size = sprite_size;
+    if (sprite_width !== undefined) this.sprite_width = sprite_width;
+    if (sprite_height !== undefined) this.sprite_height = sprite_height;
   }
   async init() {
     const { Sprite } = await import('@/core/sprite.js');
-    this.sprite = new Sprite(this.spriteSheet, {
-      size: this.sprite_size,
-      width: this.sprite_width,
-      height: this.sprite_height
-    });
+    const spriteOpt: { size?: number, width?: number, height?: number } = {};
+    if (this.sprite_size !== undefined) spriteOpt.size = this.sprite_size;
+    if (this.sprite_width !== undefined) spriteOpt.width = this.sprite_width;
+    if (this.sprite_height !== undefined) spriteOpt.height = this.sprite_height;
+    this.sprite = new Sprite(this.spriteSheet, spriteOpt);
   }
 }

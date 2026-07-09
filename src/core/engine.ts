@@ -13,8 +13,7 @@ export class Engine {
   height: number;
   lastTime: number;
   FRAME_INTERVAL: number;
-  object: any[];
-  objects: Array<any> = [];
+  scenes: Scene[] = [];
 
   constructor() {
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -25,24 +24,27 @@ export class Engine {
     this.height = this.canvas.height = window.innerHeight;
     this.lastTime = 0;
     this.FRAME_INTERVAL = 1000 / this.UPS;
-    this.object = []
   }
-  addObject(object: Object) {
-    this.object.push(object);
+  addScene(scene: Scene) {
+    this.scenes.push(scene);
   }
-  setObjects(objects: Object[]) {
-    this.object = objects;
+  removeScene(scene: Scene) {
+    this.scenes = this.scenes.filter((s) => s !== scene);
   }
 
   async start() {
-    //NOTE: cargamos todos los objetos requeridos antes de iniciar el motor
-    await Promise.all(this.object.map((o) => o.init()));
+    for (const scene of this.scenes) {
+      await scene.init();
+    }
     await this.run(0);
   }
 
   async update(deltaTime: number) {
     InputHandler.getInstance().update();
-    this.object.forEach((o) => o.update({ deltaTime, canvas: this.canvas, ctx: this.ctx }));
+    const opt: ObjectUpdateOptions = { deltaTime, canvas: this.canvas, ctx: this.ctx };
+    for (const scene of this.scenes) {
+      scene.update(opt);
+    }
   }
 
   async draw() {
@@ -56,12 +58,13 @@ export class Engine {
       this.width = this.canvas.width = window.innerWidth;
       this.height = this.canvas.height = window.innerHeight;
     }
-    this.object.forEach((o) => o.draw(this.ctx));
+    const sorted = [...this.scenes].sort((a, b) => a.depth - b.depth);
+    for (const scene of sorted) {
+      scene.draw(this.ctx);
+    }
     this.ctx.font = 'bold 20px Arial';
     this.ctx.fillStyle = 'yellow';
     this.ctx.fillText(`FPS:  ${this.fpsDisplay}`, 10, 30);
-
-
   }
 
   async run(time: number) {
@@ -81,7 +84,4 @@ export class Engine {
     this.draw()
     requestAnimationFrame((t) => this.run(t));
   }
-
 }
-
-

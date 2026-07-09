@@ -6,6 +6,7 @@ export class Object {
   color: string = 'yellow';
   speedX: number = 0;
   speedY: number = 0;
+  depth: number = 0;
   markedForDeletion: boolean = false;
   constructor() { }
 

@@ -12,8 +12,9 @@ interface Engine {
   height: number;
   lastTime: number;
   FRAME_INTERVAL: number;
-  object: any[];
-  input: InputHandler;
+  scenes: Scene[];
+  addScene(scene: Scene): void;
+  removeScene(scene: Scene): void;
   start(): Promise<void>;
   update(deltaTime: number): Promise<void>;
   draw(): Promise<void>;
