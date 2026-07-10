@@ -1,14 +1,16 @@
 export class Sprite implements Sprite {
-  size?: number
+  size?: number;
   width?: number;
   height?: number;
   maxColumns: number = 0;
   maxRows: number = 0;
   spriteSheet: HTMLImageElement;
-  constructor(spriteSheet: HTMLImageElement, opt: { size?: number, width?: number, height?: number }) {
+  constructor(
+    spriteSheet: HTMLImageElement,
+    opt: { size?: number; width?: number; height?: number }
+  ) {
     const { size, width, height } = opt;
-    if (!size && (!width || !height))
-      throw new Error('Sprite size not defined');
+    if (!size && (!width || !height)) throw new Error('Sprite size not defined');
     if (size !== undefined) this.size = size;
     if (width !== undefined) this.width = width;
     if (height !== undefined) this.height = height;
@@ -40,7 +42,7 @@ export class Sprite implements Sprite {
       height: h
     };
   }
-  draw(opt: { context: ctx; index: number, x: number, y: number }) {
+  draw(opt: { context: ctx; index: number; x: number; y: number }) {
     const { context, index, x, y } = opt;
     const spriteData = this.getSpriteData(index);
     context.drawImage(

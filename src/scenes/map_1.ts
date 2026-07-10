@@ -2,8 +2,8 @@ import { Scene } from '@/core/scene.js';
 
 export class Map1 extends Scene implements Scene {
   constructor() {
-    super()
-    this.depth = 0
+    super();
+    this.depth = 0;
   }
   async init() {
     const { SpriteSheets } = await import('@/core/spritesheet.js');

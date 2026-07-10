@@ -2,7 +2,7 @@ export class Scene implements Scene {
   objects: Object[] = [];
   spriteSheet!: SpriteSheets;
   depth: number = 0;
-  constructor() { }
+  constructor() {}
   addObject(object: any) {
     this.objects.push(object);
   }

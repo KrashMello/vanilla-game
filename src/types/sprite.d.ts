@@ -5,6 +5,6 @@ interface Sprite {
   maxColumnsCalc: number;
   maxRowsCalc: number;
   spriteSheet: HTMLImageElement;
-  getSpriteData(index: number): { col: number, row: number, width: number, height: number };
-  draw(opt: { context: ctx, index: number, x: number, y: number }): void;
+  getSpriteData(index: number): { col: number; row: number; width: number; height: number };
+  draw(opt: { context: ctx; index: number; x: number; y: number }): void;
 }

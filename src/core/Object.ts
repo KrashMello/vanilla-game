@@ -8,9 +8,9 @@ export class Object {
   speedY: number = 0;
   depth: number = 0;
   markedForDeletion: boolean = false;
-  constructor() { }
+  constructor() {}
 
-  async init() { }
+  async init() {}
 
   update(opt: ObjectUpdateOptions) {
     this.x += this.speedX;
