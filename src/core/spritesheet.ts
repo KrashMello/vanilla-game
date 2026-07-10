@@ -1,4 +1,4 @@
-import { Sprite } from './sprite';
+import type { Sprite } from './sprite';
 
 export class SpriteSheets implements SpriteSheets {
   spriteSheet: HTMLImageElement;
