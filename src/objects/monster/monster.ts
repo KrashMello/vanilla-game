@@ -1,4 +1,14 @@
-import { Player } from '@/objects/player/player';
+import { HealthBarComponent } from '@/objects/player/components/health-bar';
+import { InputComponent } from '@/objects/player/components/input';
+import { Player } from '@/objects/player/player.js';
+
+const monsterAnimations = {
+  idle: { index: 82, frames: 2 },
+  left: { index: 86, frames: 6 },
+  right: { index: 86, frames: 6 },
+  up: { index: 98, frames: 5 },
+  down: { index: 91, frames: 6 }
+};
 
 export class Monster extends Player {
   constructor() {
@@ -7,17 +17,11 @@ export class Monster extends Player {
     this.y = 500;
     this.width = 44;
     this.height = 44;
-    this.color = 'yellow';
     this.maxSpeed = 5;
-    this.sprite_counter = 0;
-    this.position = 'idle';
-    this.animation_timer = 0;
-    this.sprite_animation = 2;
-    this.animation_max_column = false;
-    this.name = 'monster';
-    this.life = 200;
-    this.max_life = 200;
+    const input = this.getComponent(InputComponent);
+    if (input) this.removeComponent(input);
+    const health_bar = this.getComponent(HealthBarComponent);
+    if (health_bar) this.removeComponent(health_bar);
+    this.addComponent(new HealthBarComponent('monster', 200, 200, 0, 0));
   }
-
-  move() {}
 }
