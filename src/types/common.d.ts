@@ -12,11 +12,6 @@ interface Engine {
   height: number;
   lastTime: number;
   FRAME_INTERVAL: number;
-  scenes: Scene[];
-  addScene(scene: Scene): void;
-  removeScene(scene: Scene): void;
+  game: Game;
   start(): Promise<void>;
-  update(deltaTime: number): Promise<void>;
-  draw(): Promise<void>;
-  run(time: number): Promise<void>;
 }

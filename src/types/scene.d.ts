@@ -1,8 +1,10 @@
 interface Scene {
-  objects: Object[];
-  spriteSheet: SpriteSheets;
+  entities: Entity[];
+  map: GameMap | null;
+  camera: Camera;
   depth: number;
-  addObject(object: Object): void;
+  addEntity(entity: Entity): void;
+  removeEntity(entity: Entity): void;
   init(): Promise<void>;
   update(opt: ObjectUpdateOptions): void;
   draw(context: ctx): void;

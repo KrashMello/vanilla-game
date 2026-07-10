@@ -1,19 +1,54 @@
-export class Scene implements Scene {
-  objects: Object[] = [];
-  spriteSheet!: SpriteSheets;
+import { Camera } from './camera.js';
+import type { Entity } from './entity.js';
+import type { GameMap } from './map.js';
+
+export class Scene {
+  entities: Entity[] = [];
+  map: GameMap | null = null;
+  camera: Camera;
   depth: number = 0;
-  constructor() {}
-  addObject(object: any) {
-    this.objects.push(object);
+
+  constructor(canvas: HTMLCanvasElement) {
+    this.camera = new Camera(canvas);
   }
+
+  addEntity(entity: Entity) {
+    entity.scene = this;
+    this.entities.push(entity);
+  }
+
+  removeEntity(entity: Entity) {
+    entity.scene = null;
+    this.entities = this.entities.filter((e) => e !== entity);
+  }
+
   async init() {
-    await Promise.all(this.objects.map((o) => o.init()));
+    if (this.map) {
+      await this.map.init();
+    }
+    for (const entity of this.entities) {
+      entity.scene = this;
+      await entity.init();
+    }
   }
+
   update(opt: ObjectUpdateOptions) {
-    this.objects.forEach((o) => o.update(opt));
+    this.camera.update();
+    if (this.map) {
+      this.map.draw(opt.ctx, this.camera);
+    }
+    for (const entity of this.entities) {
+      entity.update(opt);
+    }
   }
+
   draw(context: ctx) {
-    const sorted = [...this.objects].sort((a, b) => a.depth - b.depth);
-    sorted.forEach((o) => o.draw(context));
+    if (this.map) {
+      this.map.draw(context, this.camera);
+    }
+    const sorted = [...this.entities].sort((a, b) => a.depth - b.depth);
+    for (const entity of sorted) {
+      entity.draw(context);
+    }
   }
 }
