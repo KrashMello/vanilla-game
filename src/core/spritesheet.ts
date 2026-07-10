@@ -8,6 +8,7 @@ export class SpriteSheets implements SpriteSheets {
   sprite_width?: number;
   sprite_height?: number;
   sprite!: Sprite;
+
   static player: SpriteSheets = new SpriteSheets({
     src: 'assets/sprite/player.png',
     sprite_size: 44
@@ -16,6 +17,30 @@ export class SpriteSheets implements SpriteSheets {
     src: 'assets/sprite/scene_1.png',
     sprite_size: 16
   });
+
+  private static tilesets: Map<string, SpriteSheets> = new Map();
+
+  static registerTileset(
+    name: string,
+    src: string,
+    spriteSize: number
+  ): SpriteSheets {
+    const existing = SpriteSheets.tilesets.get(name);
+    if (existing) return existing;
+
+    const spriteSheet = new SpriteSheets({ src, sprite_size: spriteSize });
+    SpriteSheets.tilesets.set(name, spriteSheet);
+    return spriteSheet;
+  }
+
+  static getTileset(name: string): SpriteSheets | undefined {
+    return SpriteSheets.tilesets.get(name);
+  }
+
+  static hasTileset(name: string): boolean {
+    return SpriteSheets.tilesets.has(name);
+  }
+
   constructor(opt: {
     src: string;
     sprite_size?: number;
@@ -35,6 +60,7 @@ export class SpriteSheets implements SpriteSheets {
     if (sprite_width !== undefined) this.sprite_width = sprite_width;
     if (sprite_height !== undefined) this.sprite_height = sprite_height;
   }
+
   async init() {
     const { Sprite } = await import('@/core/sprite.js');
     const spriteOpt: { size?: number; width?: number; height?: number } = {};
