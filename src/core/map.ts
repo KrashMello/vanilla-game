@@ -1,139 +1,94 @@
 import type { Camera } from './camera';
 
 export class GameMap {
-  spriteSheet!: SpriteSheets;
-  tileSize: number;
+  tileSize: number = 0;
   layers: ProcessedLayer[] = [];
+  tiledMapPath: string;
   tilesets: Map<number, SpriteSheets> = new Map();
-  collisionGrid: boolean[][] = [];
+  private tilesetMeta: Map<number, { columns: number; tilecount: number }> = new Map();
+  private tileLookup: Map<number, { spriteSheet: SpriteSheets; localId: number }> = new Map();
+  collisionGrid: Set<string> = new Set();
   objects: GameObject[] = [];
   mapWidth: number = 0;
   mapHeight: number = 0;
+  camera: Camera;
+  private initialized: boolean = false;
 
-  constructor(spriteSheet: SpriteSheets | null, tileSize: number) {
-    if (spriteSheet) {
-      this.spriteSheet = spriteSheet;
-    }
-    this.tileSize = tileSize;
+  constructor(tiledMapPath: string, camera: Camera) {
+    this.tiledMapPath = tiledMapPath ?? '';
+    this.camera = camera;
   }
 
-  static fromProcessedData(data: ProcessedMap): GameMap {
-    const map = new GameMap(null, data.tileWidth);
-    map.layers = data.layers;
-    map.tilesets = data.tilesets;
-    map.collisionGrid = data.collisionGrid;
-    map.objects = data.objects;
-    map.mapWidth = data.width * data.tileWidth;
-    map.mapHeight = data.height * data.tileHeight;
-    return map;
+  private fromProcessedData(data: ProcessedMap) {
+    this.layers = data.layers;
+    this.tilesets = data.tilesets;
+    this.tilesetMeta = data.tilesetMeta;
+    this.collisionGrid = data.collisionGrid;
+    this.objects = data.objects;
+    this.mapWidth = data.width * data.tileWidth;
+    this.mapHeight = data.height * data.tileHeight;
+    this.tileSize = data.tileWidth;
+  }
+
+  private buildTileLookup() {
+    this.tileLookup.clear();
+
+    for (const [gid, meta] of this.tilesetMeta) {
+      const spriteSheet = this.tilesets.get(gid);
+      if (!spriteSheet?.sprite) continue;
+
+      for (let localId = 0; localId < meta.tilecount; localId++) {
+        this.tileLookup.set(gid + localId, { spriteSheet, localId });
+      }
+    }
   }
 
   async init() {
-    if (this.spriteSheet) {
-      await this.spriteSheet.init();
-    }
+    if (this.initialized) return;
+    this.initialized = true;
 
+    const { TiledMapLoader } = await import('@/core/tiled-map.js');
+    const loader = new TiledMapLoader();
+    const mapData = await loader.load(this.tiledMapPath);
+
+    this.fromProcessedData(mapData);
     for (const spriteSheet of this.tilesets.values()) {
       await spriteSheet.init();
     }
+    this.buildTileLookup();
   }
 
-  draw(context: ctx, camera?: Camera) {
-    if (this.layers.length > 0) {
-      this.drawProcessedLayers(context, camera);
-    } else if (this.spriteSheet?.sprite) {
-      this.drawLegacyMap(context, camera);
-    }
-  }
-
-  private drawProcessedLayers(context: ctx, camera?: Camera) {
+  draw(context: ctx, camera: Camera) {
     for (const layer of this.layers) {
       if (!layer.visible) continue;
+      if (layer.type !== 'tilelayer') continue;
+      if (!layer.chunks) continue;
 
-      if (layer.type === 'tilelayer') {
-        this.drawTileLayer(context, layer, camera);
-      }
-    }
-  }
-
-  private drawTileLayer(context: ctx, layer: ProcessedLayer, camera?: Camera) {
-    if (!layer.data && !layer.chunks) return;
-
-    if (layer.data) {
-      this.drawTileData(context, layer.data, layer, camera);
-    }
-
-    if (layer.chunks) {
       for (const chunk of layer.chunks) {
-        this.drawChunk(context, chunk, layer, camera);
+        this.drawChunk(context, chunk, camera);
       }
     }
   }
 
-  private drawTileData(
-    context: ctx,
-    data: number[][],
-    _layer: ProcessedLayer,
-    camera?: Camera
-  ) {
-    const size = this.tileSize;
-    const rows = data.length;
-    const cols = data[0]?.length ?? 0;
+  private drawChunk(context: ctx, chunk: ProcessedChunk, camera: Camera) {
+    const vw = camera.width / camera.zoom;
+    const vh = camera.height / camera.zoom;
 
-    if (camera) {
-      const vw = camera.width / camera.zoom;
-      const vh = camera.height / camera.zoom;
-      const startCol = Math.max(0, Math.floor(camera.x / size));
-      const endCol = Math.min(cols, Math.ceil((camera.x + vw) / size));
-      const startRow = Math.max(0, Math.floor(camera.y / size));
-      const endRow = Math.min(rows, Math.ceil((camera.y + vh) / size));
-
-      for (let row = startRow; row < endRow; row++) {
-        for (let col = startCol; col < endCol; col++) {
-          const tileId = data[row]?.[col] ?? 0;
-          if (tileId > 0) {
-            this.drawTile(context, tileId, col * size, row * size);
-          }
-        }
-      }
-    } else {
-      for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-          const tileId = data[row]?.[col] ?? 0;
-          if (tileId > 0) {
-            this.drawTile(context, tileId, col * size, row * size);
-          }
-        }
-      }
-    }
-  }
-
-  private drawChunk(
-    context: ctx,
-    chunk: ProcessedChunk,
-    _layer: ProcessedLayer,
-    camera?: Camera
-  ) {
-    const size = this.tileSize;
-    const startX = chunk.x * size;
-    const startY = chunk.y * size;
-
-    if (camera) {
-      const vw = camera.width / camera.zoom;
-      const vh = camera.height / camera.zoom;
-      const endX = startX + chunk.width * size;
-      const endY = startY + chunk.height * size;
-
-      if (startX > camera.x + vw || endX < camera.x) return;
-      if (startY > camera.y + vh || endY < camera.y) return;
+    if (
+      chunk.worldBounds.maxX < camera.x ||
+      chunk.worldBounds.minX > camera.x + vw ||
+      chunk.worldBounds.maxY < camera.y ||
+      chunk.worldBounds.minY > camera.y + vh
+    ) {
+      return;
     }
 
     for (let row = 0; row < chunk.height; row++) {
       for (let col = 0; col < chunk.width; col++) {
         const tileId = chunk.data[row]?.[col] ?? 0;
         if (tileId > 0) {
-          const x = (chunk.x + col) * size;
-          const y = (chunk.y + row) * size;
+          const x = (chunk.x + col) * this.tileSize;
+          const y = (chunk.y + row) * this.tileSize;
           this.drawTile(context, tileId, x, y);
         }
       }
@@ -141,56 +96,30 @@ export class GameMap {
   }
 
   private drawTile(context: ctx, tileId: number, x: number, y: number) {
-    let firstGid = 0;
-    for (const [gid] of this.tilesets) {
-      if (gid <= tileId) {
-        firstGid = gid;
-      }
-    }
-
-    if (firstGid === 0) return;
-
-    const spriteSheet = this.tilesets.get(firstGid);
-    if (!spriteSheet?.sprite) return;
-
-    const localId = tileId - firstGid;
-    spriteSheet.sprite.draw({ context, index: localId, x, y });
+    const lookup = this.tileLookup.get(tileId);
+    if (!lookup?.spriteSheet.sprite) return;
+    const data = lookup.spriteSheet.sprite.getSpriteData(lookup.localId);
+    context.drawImage(
+      lookup.spriteSheet.sprite.spriteSheet,
+      data.col,
+      data.row,
+      data.width,
+      data.height,
+      x - 0.5,
+      y - 0.5,
+      data.width + 1,
+      data.height + 1
+    );
   }
 
-  private drawLegacyMap(context: ctx, camera?: Camera) {
-    const sprite = this.spriteSheet.sprite;
-    const cols = sprite.maxColumnsCalc;
-    const rows = sprite.maxRowsCalc;
-    const size = this.tileSize;
-
-    if (camera) {
-      const vw = camera.width / camera.zoom;
-      const vh = camera.height / camera.zoom;
-      const startCol = Math.max(0, Math.floor(camera.x / size));
-      const endCol = Math.min(cols, Math.ceil((camera.x + vw) / size));
-      const startRow = Math.max(0, Math.floor(camera.y / size));
-      const endRow = Math.min(rows, Math.ceil((camera.y + vh) / size));
-
-      for (let row = startRow; row < endRow; row++) {
-        for (let col = startCol; col < endCol; col++) {
-          const index = row * cols + col;
-          sprite.draw({ context, index, x: col * size, y: row * size });
-        }
-      }
-    } else {
-      for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-          const index = row * cols + col;
-          sprite.draw({ context, index, x: col * size, y: row * size });
-        }
-      }
-    }
+  isInViewport(x: number, y: number, w: number, h: number, camera: Camera): boolean {
+    const vw = camera.width / camera.zoom;
+    const vh = camera.height / camera.zoom;
+    return !(x + w < camera.x || x > camera.x + vw || y + h < camera.y || y > camera.y + vh);
   }
 
   isSolid(tileX: number, tileY: number): boolean {
-    if (tileY < 0 || tileY >= this.collisionGrid.length) return true;
-    if (tileX < 0 || tileX >= (this.collisionGrid[0]?.length ?? 0)) return true;
-    return this.collisionGrid[tileY]?.[tileX] ?? false;
+    return this.collisionGrid.has(`${tileX},${tileY}`);
   }
 
   isSolidAtPixel(x: number, y: number): boolean {
@@ -200,15 +129,15 @@ export class GameMap {
   }
 
   getObjectsByName(name: string): GameObject[] {
-    return this.objects.filter(o => o.name === name);
+    return this.objects.filter((o) => o.name === name);
   }
 
   getObjectsByType(type: string): GameObject[] {
-    return this.objects.filter(o => o.type === type);
+    return this.objects.filter((o) => o.type === type);
   }
 
   getSpawnPoint(name: string): { x: number; y: number } | null {
-    const obj = this.objects.find(o => o.name === name);
+    const obj = this.objects.find((o) => o.name === name);
     if (obj) {
       return { x: obj.x, y: obj.y };
     }

@@ -1,5 +1,7 @@
 import { SpriteSheets } from './spritesheet';
 
+const CHUNK_SIZE = 16;
+
 export class TiledMapLoader {
   private basePath: string;
 
@@ -15,9 +17,10 @@ export class TiledMapLoader {
 
   private processMap(tiledMap: Tiled.Map): ProcessedMap {
     const tilesets = this.processTilesets(tiledMap.tilesets);
-    const layers = this.processLayers(tiledMap.layers);
+    const tilesetMeta = this.processTilesetMeta(tiledMap.tilesets);
+    const layers = this.processLayers(tiledMap.layers, tiledMap.tilewidth, tiledMap.tileheight);
     const objects = this.extractObjects(tiledMap.layers);
-    const collisionGrid = this.buildCollisionGrid(tiledMap, layers);
+    const collisionGrid = this.buildCollisionGrid(layers);
 
     return {
       width: tiledMap.width,
@@ -26,6 +29,7 @@ export class TiledMapLoader {
       tileHeight: tiledMap.tileheight,
       layers,
       tilesets,
+      tilesetMeta,
       objects,
       collisionGrid
     };
@@ -46,18 +50,37 @@ export class TiledMapLoader {
     return tilesets;
   }
 
-  private processLayers(tiledLayers: Tiled.Layer[]): ProcessedLayer[] {
+  private processTilesetMeta(
+    tiledTilesets: Tiled.Tileset[]
+  ): Map<number, { columns: number; tilecount: number }> {
+    const meta = new Map<number, { columns: number; tilecount: number }>();
+
+    for (const tiledTileset of tiledTilesets) {
+      meta.set(tiledTileset.firstgid, {
+        columns: tiledTileset.columns,
+        tilecount: tiledTileset.tilecount
+      });
+    }
+
+    return meta;
+  }
+
+  private processLayers(
+    tiledLayers: Tiled.Layer[],
+    tileWidth: number,
+    tileHeight: number
+  ): ProcessedLayer[] {
     const layers: ProcessedLayer[] = [];
 
     for (const tiledLayer of tiledLayers) {
       if (tiledLayer.type === 'group' && tiledLayer.layers) {
-        const groupLayers = this.processLayers(tiledLayer.layers);
+        const groupLayers = this.processLayers(tiledLayer.layers, tileWidth, tileHeight);
         layers.push(...groupLayers);
         continue;
       }
 
       if (tiledLayer.type === 'tilelayer') {
-        layers.push(this.processTileLayer(tiledLayer));
+        layers.push(this.processTileLayer(tiledLayer, tileWidth, tileHeight));
       } else if (tiledLayer.type === 'objectgroup') {
         layers.push(this.processObjectGroup(tiledLayer));
       } else if (tiledLayer.type === 'imagelayer') {
@@ -68,24 +91,19 @@ export class TiledMapLoader {
     return layers;
   }
 
-  private processTileLayer(layer: Tiled.Layer): ProcessedLayer {
-    let data: number[][] | undefined;
+  private processTileLayer(
+    layer: Tiled.Layer,
+    tileWidth: number,
+    tileHeight: number
+  ): ProcessedLayer {
+    let chunks: ProcessedChunk[] | undefined;
 
     if (Array.isArray(layer.data)) {
-      data = this.convertTo2DArray(layer.data, layer.width ?? 0, layer.height ?? 0);
+      const data = this.convertTo2DArray(layer.data, layer.width ?? 0, layer.height ?? 0);
+      chunks = this.convertDataToChunks(data, tileWidth, tileHeight);
+    } else if (layer.chunks) {
+      chunks = layer.chunks.map((chunk) => this.processChunk(chunk, tileWidth, tileHeight));
     }
-
-    const chunks: ProcessedChunk[] | undefined = layer.chunks?.map(chunk => ({
-      x: chunk.x,
-      y: chunk.y,
-      width: chunk.width,
-      height: chunk.height,
-      data: this.convertTo2DArray(
-        Array.isArray(chunk.data) ? chunk.data : [],
-        chunk.width,
-        chunk.height
-      )
-    }));
 
     return {
       id: layer.id,
@@ -93,13 +111,80 @@ export class TiledMapLoader {
       type: 'tilelayer',
       visible: layer.visible,
       opacity: layer.opacity,
-      data,
       chunks,
       offsetx: layer.offsetx ?? 0,
       offsety: layer.offsety ?? 0,
       parallaxx: layer.parallaxx ?? 1,
       parallaxy: layer.parallaxy ?? 1
     };
+  }
+
+  private processChunk(chunk: Tiled.Chunk, tileWidth: number, tileHeight: number): ProcessedChunk {
+    let data: number[][];
+
+    if (Array.isArray(chunk.data)) {
+      data = this.convertTo2DArray(chunk.data, chunk.width, chunk.height);
+    } else {
+      data = [];
+      for (let y = 0; y < chunk.height; y++) {
+        data.push(new Array(chunk.width).fill(0));
+      }
+    }
+
+    return {
+      x: chunk.x,
+      y: chunk.y,
+      width: chunk.width,
+      height: chunk.height,
+      data,
+      worldBounds: {
+        minX: chunk.x * tileWidth,
+        minY: chunk.y * tileHeight,
+        maxX: (chunk.x + chunk.width) * tileWidth,
+        maxY: (chunk.y + chunk.height) * tileHeight
+      }
+    };
+  }
+
+  private convertDataToChunks(
+    data: number[][],
+    tileWidth: number,
+    tileHeight: number
+  ): ProcessedChunk[] {
+    const chunks: ProcessedChunk[] = [];
+    const rows = data.length;
+    const cols = data[0]?.length ?? 0;
+
+    for (let startY = 0; startY < rows; startY += CHUNK_SIZE) {
+      for (let startX = 0; startX < cols; startX += CHUNK_SIZE) {
+        const endY = Math.min(startY + CHUNK_SIZE, rows);
+        const endX = Math.min(startX + CHUNK_SIZE, cols);
+        const chunkData: number[][] = [];
+
+        for (let y = startY; y < endY; y++) {
+          const row: number[] = [];
+          for (let x = startX; x < endX; x++) {
+            row.push(data[y]?.[x] ?? 0);
+          }
+          chunkData.push(row);
+        }
+
+        chunks.push({
+          x: startX,
+          y: startY,
+          width: endX - startX,
+          height: endY - startY,
+          data: chunkData,
+          worldBounds: {
+            minX: startX * tileWidth,
+            minY: startY * tileHeight,
+            maxX: endX * tileWidth,
+            maxY: endY * tileHeight
+          }
+        });
+      }
+    }
+    return chunks;
   }
 
   private processObjectGroup(layer: Tiled.Layer): ProcessedLayer {
@@ -186,27 +271,18 @@ export class TiledMapLoader {
     };
   }
 
-  private buildCollisionGrid(tiledMap: Tiled.Map, layers: ProcessedLayer[]): boolean[][] {
-    const width = tiledMap.width;
-    const height = tiledMap.height;
-    const collisionGrid: boolean[][] = [];
-
-    for (let y = 0; y < height; y++) {
-      const row: boolean[] = [];
-      for (let x = 0; x < width; x++) {
-        row.push(false);
-      }
-      collisionGrid.push(row);
-    }
+  private buildCollisionGrid(layers: ProcessedLayer[]): Set<string> {
+    const collisionGrid = new Set<string>();
 
     for (const layer of layers) {
-      if (layer.name.toLowerCase().includes('collision') && layer.data) {
-        for (let y = 0; y < height; y++) {
-          for (let x = 0; x < width; x++) {
-            const tileId = layer.data[y]?.[x] ?? 0;
-            if (tileId > 0) {
-              const row = collisionGrid[y];
-              if (row) row[x] = true;
+      if (!layer.name.toLowerCase().includes('collision')) continue;
+      if (!layer.chunks) continue;
+
+      for (const chunk of layer.chunks) {
+        for (let row = 0; row < chunk.height; row++) {
+          for (let col = 0; col < chunk.width; col++) {
+            if ((chunk.data[row]?.[col] ?? 0) > 0) {
+              collisionGrid.add(`${chunk.x + col},${chunk.y + row}`);
             }
           }
         }
@@ -217,7 +293,7 @@ export class TiledMapLoader {
   }
 
   getSpawnPoint(objects: GameObject[], name: string): { x: number; y: number } | null {
-    const obj = objects.find(o => o.name === name);
+    const obj = objects.find((o) => o.name === name);
     if (obj) {
       return { x: obj.x, y: obj.y };
     }
@@ -225,10 +301,10 @@ export class TiledMapLoader {
   }
 
   getObjectsByType(objects: GameObject[], type: string): GameObject[] {
-    return objects.filter(o => o.type === type);
+    return objects.filter((o) => o.type === type);
   }
 
   getObjectsByName(objects: GameObject[], name: string): GameObject[] {
-    return objects.filter(o => o.name === name);
+    return objects.filter((o) => o.name === name);
   }
 }

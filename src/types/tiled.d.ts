@@ -85,7 +85,17 @@ declare namespace Tiled {
     grid?: Grid;
     tileoffset?: TileOffset;
     fillmode?: 'stretch' | 'preserve-aspect-fit';
-    objectalignment?: 'unspecified' | 'topleft' | 'top' | 'topright' | 'left' | 'center' | 'right' | 'bottomleft' | 'bottom' | 'bottomright';
+    objectalignment?:
+      | 'unspecified'
+      | 'topleft'
+      | 'top'
+      | 'topright'
+      | 'left'
+      | 'center'
+      | 'right'
+      | 'bottomleft'
+      | 'bottom'
+      | 'bottomright';
     tilerendersize?: 'tile' | 'grid';
     wangsets?: WangSet[];
     terrains?: Terrain[];
@@ -220,8 +230,9 @@ declare interface ProcessedMap {
   tileHeight: number;
   layers: ProcessedLayer[];
   tilesets: Map<number, SpriteSheets>;
+  tilesetMeta: Map<number, { columns: number; tilecount: number }>;
   objects: GameObject[];
-  collisionGrid: boolean[][];
+  collisionGrid: Set<string>;
 }
 
 declare interface ProcessedLayer {
@@ -230,7 +241,6 @@ declare interface ProcessedLayer {
   type: 'tilelayer' | 'objectgroup' | 'imagelayer';
   visible: boolean;
   opacity: number;
-  data?: number[][] | undefined;
   chunks?: ProcessedChunk[] | undefined;
   offsetx: number;
   offsety: number;
@@ -244,6 +254,7 @@ declare interface ProcessedChunk {
   width: number;
   height: number;
   data: number[][];
+  worldBounds: { minX: number; minY: number; maxX: number; maxY: number };
 }
 
 declare interface GameObject {

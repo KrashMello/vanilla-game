@@ -20,11 +20,7 @@ export class SpriteSheets implements SpriteSheets {
 
   private static tilesets: Map<string, SpriteSheets> = new Map();
 
-  static registerTileset(
-    name: string,
-    src: string,
-    spriteSize: number
-  ): SpriteSheets {
+  static registerTileset(name: string, src: string, spriteSize: number): SpriteSheets {
     const existing = SpriteSheets.tilesets.get(name);
     if (existing) return existing;
 

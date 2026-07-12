@@ -7,4 +7,9 @@ type ObjectOptions = {
   color: string;
 };
 
-type ObjectUpdateOptions = { deltaTime: number; canvas: HTMLCanvasElement; ctx: ctx };
+type ObjectUpdateOptions = {
+  deltaTime: number;
+  canvas: HTMLCanvasElement;
+  ctx: ctx;
+  camera: Camera;
+};

@@ -1,3 +1,5 @@
+import type { Entity } from './entity.js';
+
 export abstract class Component {
   entity: Entity = null!;
 
