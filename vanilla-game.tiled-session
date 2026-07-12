@@ -1,0 +1,58 @@
+{
+    "activeFile": "tiled/maps/map_1.tmx",
+    "automapping.whileDrawing": false,
+    "expandedProjectPaths": [
+        "tiled/maps",
+        ".",
+        "tiled/worlds",
+        "tiled",
+        "tiled/tileset"
+    ],
+    "fileStates": {
+        "tiled/maps/map_1.tmx": {
+            "scale": 1,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 903,
+                "y": 965
+            }
+        },
+        "tiled/tileset/player.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 3.74
+        },
+        "tiled/tileset/scene_1.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 5.5
+        }
+    },
+    "last.exportedFilePath": "/home/krashmello/tmp/test_game/public/assets/maps",
+    "last.imagePath": "/home/krashmello/tmp/test_game/public/assets/sprite",
+    "last.worldFilePath": "/home/krashmello/tmp/test_game/tiled/worlds",
+    "loadedWorlds": [
+        "/home/krashmello/tmp/test_game/tiled/worlds/world_1.world",
+        "/home/krashmello/tmp/test_game/tiled/worlds/world_1.world"
+    ],
+    "map.fixedSize": false,
+    "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "openFiles": [
+        "tiled/tileset/scene_1.tsx",
+        "tiled/tileset/player.tsx",
+        "tiled/maps/map_1.tmx"
+    ],
+    "project": "vanilla-game.tiled-project",
+    "recentFiles": [
+        "tiled/tileset/scene_1.tsx",
+        "tiled/tileset/player.tsx",
+        "tiled/maps/map_1.tmx"
+    ],
+    "resizeMap.removeObjects": true,
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 44,
+        "width": 44
+    }
+}
