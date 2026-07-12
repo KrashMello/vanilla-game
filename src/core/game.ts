@@ -1,10 +1,12 @@
-import type { Scene } from './scene.js';
 import { Engine } from './engine.js';
 import { InputHandler } from './inputs.js';
+import type { Scene } from './scene.js';
+import { SaveManager } from './save-manager.js';
 
 export class Game {
   engine: Engine;
   scenes: Scene[] = [];
+  currentScene: Scene | null = null;
 
   constructor() {
     this.engine = new Engine(this);
@@ -12,29 +14,65 @@ export class Game {
 
   addScene(scene: Scene) {
     this.scenes.push(scene);
+    if (!this.currentScene) {
+      this.currentScene = scene;
+    }
   }
 
   removeScene(scene: Scene) {
     this.scenes = this.scenes.filter((s) => s !== scene);
+    if (this.currentScene === scene) {
+      this.currentScene = this.scenes[0] ?? null;
+    }
+  }
+
+  async switchScene(scene: Scene) {
+    if (this.currentScene) {
+      this.saveCurrentState();
+      this.currentScene.onExit();
+    }
+    this.currentScene = scene;
+    if (!this.scenes.includes(scene)) {
+      this.scenes.push(scene);
+    }
+    await scene.init();
   }
 
   async start() {
     for (const scene of this.scenes) {
       await scene.init();
     }
+
+    const savedState = SaveManager.getInstance().load();
+    if (savedState && this.currentScene) {
+      this.currentScene.restoreSaveData(savedState);
+    }
+
+    setInterval(() => {
+      this.saveCurrentState();
+    }, 30000);
+
     await this.engine.start();
   }
 
   update(deltaTime: number) {
     InputHandler.getInstance().update();
-    for (const scene of this.scenes) {
-      const opt: ObjectUpdateOptions = {
-        deltaTime,
-        canvas: this.engine.canvas,
-        ctx: this.engine.ctx,
-        camera: scene.camera
-      };
-      scene.update(opt);
+    if (!this.currentScene) return;
+
+    const opt: ObjectUpdateOptions = {
+      deltaTime,
+      canvas: this.engine.canvas,
+      ctx: this.engine.ctx,
+      camera: this.currentScene.camera
+    };
+    this.currentScene.update(opt);
+  }
+
+  saveCurrentState() {
+    if (!this.currentScene) return;
+    const state = this.currentScene.getSaveData();
+    if (state) {
+      SaveManager.getInstance().save(state);
     }
   }
 
@@ -49,11 +87,10 @@ export class Game {
       }
     }
 
-    const sorted = [...this.scenes].sort((a, b) => a.depth - b.depth);
-    for (const scene of sorted) {
-      scene.camera.apply(this.engine.ctx);
-      scene.draw(this.engine.ctx);
-      scene.camera.restore(this.engine.ctx);
+    if (this.currentScene) {
+      this.currentScene.camera.apply(this.engine.ctx);
+      this.currentScene.draw(this.engine.ctx);
+      this.currentScene.camera.restore(this.engine.ctx);
     }
 
     this.engine.ctx.font = 'bold 20px Arial';

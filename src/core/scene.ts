@@ -1,14 +1,18 @@
 import { Camera } from './camera.js';
 import type { Entity } from './entity.js';
 import type { GameMap } from './map.js';
+import type { GameState } from './save-manager.js';
 
 export class Scene {
+  canvas: HTMLCanvasElement;
   entities: Entity[] = [];
   map: GameMap | null = null;
   camera: Camera;
   depth: number = 0;
+  name: string = 'scene';
 
   constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
     this.camera = new Camera(canvas);
   }
 
@@ -30,13 +34,20 @@ export class Scene {
       entity.scene = this;
       await entity.init();
     }
+    await this.onEnter();
   }
+
+  async onEnter() {}
+  onExit() {}
+
+  getSaveData(): GameState | null {
+    return null;
+  }
+
+  restoreSaveData(_state: GameState): void {}
 
   update(opt: ObjectUpdateOptions) {
     this.camera.update();
-    if (this.map) {
-      this.map.draw(opt.ctx, this.camera);
-    }
     for (const entity of this.entities) {
       entity.update(opt);
     }
@@ -48,7 +59,12 @@ export class Scene {
     }
     const sorted = [...this.entities].sort((a, b) => a.depth - b.depth);
     for (const entity of sorted) {
-      entity.draw(context);
+      if (
+        !this.map ||
+        this.map.isInViewport(entity.x, entity.y, entity.width, entity.height, this.camera)
+      ) {
+        entity.draw(context);
+      }
     }
   }
 }
