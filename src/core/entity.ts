@@ -35,9 +35,9 @@ export class Entity {
     await Promise.all(this.components.map((c) => c.init()));
   }
 
-  update(opt: ObjectUpdateOptions) {
+  update(deltaTime: number) {
     for (const component of this.components) {
-      component.update(opt);
+      component.update(deltaTime);
     }
   }
 

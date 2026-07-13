@@ -1,7 +1,7 @@
 import { Engine } from './engine.js';
 import { InputHandler } from './inputs.js';
-import type { Scene } from './scene.js';
 import { SaveManager } from './save-manager.js';
+import type { Scene } from './scene.js';
 
 export class Game {
   engine: Engine;
@@ -58,14 +58,7 @@ export class Game {
   update(deltaTime: number) {
     InputHandler.getInstance().update();
     if (!this.currentScene) return;
-
-    const opt: ObjectUpdateOptions = {
-      deltaTime,
-      canvas: this.engine.canvas,
-      ctx: this.engine.ctx,
-      camera: this.currentScene.camera
-    };
-    this.currentScene.update(opt);
+    this.currentScene.update(deltaTime);
   }
 
   saveCurrentState() {

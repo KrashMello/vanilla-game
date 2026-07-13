@@ -9,7 +9,7 @@ export abstract class Component {
 
   async init() {}
 
-  update(_opt: ObjectUpdateOptions) {}
+  update(deltaTime: number) {}
 
   draw(_context: ctx) {}
 }

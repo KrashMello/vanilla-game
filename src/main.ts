@@ -4,7 +4,7 @@ window.addEventListener('load', async () => {
   const { Game } = await import('@/core/game.js');
   const { Scene_1 } = await import('@/scenes/scene_1.js');
   const game = new Game();
-  const scene_1 = new Scene_1(game.engine.canvas, 'map_3.json');
+  const scene_1 = new Scene_1(game.engine.canvas);
   game.addScene(scene_1);
 
   const savedState = SaveManager.getInstance().load();

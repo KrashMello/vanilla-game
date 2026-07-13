@@ -1,18 +1,18 @@
 import { Camera } from '@/core/camera.js';
 import type { Entity } from '@/core/entity.js';
-import { GameMap } from '@/core/map.js';
 import type { GameState, PlayerSaveData } from '@/core/save-manager.js';
 import { Scene } from '@/core/scene.js';
+import { GameMap } from '@/core/map.js';
 
 export class Scene_1 extends Scene {
   tiledMapPath: string;
   private player: Entity | null = null;
   private savedPlayerData: PlayerSaveData | null = null;
 
-  constructor(canvas: HTMLCanvasElement, tiledMapPath: string) {
+  constructor(canvas: HTMLCanvasElement) {
     super(canvas);
     this.depth = 0;
-    this.tiledMapPath = tiledMapPath;
+    this.tiledMapPath = 'map_3.json';
     this.name = 'scene_1';
   }
 
@@ -24,8 +24,7 @@ export class Scene_1 extends Scene {
       zoom: 1.5
     });
 
-    this.map = new GameMap(this.tiledMapPath, this.camera);
-
+    this.map = GameMap.map_3;
     const { Player } = await import('@/objects/player/player.js');
     const { Monster } = await import('@/objects/monster/monster.js');
     this.player = new Player();

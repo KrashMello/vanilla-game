@@ -102,7 +102,10 @@ export class Camera {
     ctx.translate(this.width / 2, this.height / 2);
     ctx.scale(this.zoom, this.zoom);
     ctx.translate(-this.width / 2, -this.height / 2);
-    ctx.translate(-Math.round(this.x), -Math.round(this.y));
+    const snap = 1 / this.zoom;
+    const snappedX = Math.round(this.x / snap) * snap;
+    const snappedY = Math.round(this.y / snap) * snap;
+    ctx.translate(-snappedX, -snappedY);
   }
 
   restore(ctx: CanvasRenderingContext2D) {
