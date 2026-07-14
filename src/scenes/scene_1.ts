@@ -1,8 +1,8 @@
 import { Camera } from '@/core/camera.js';
 import type { Entity } from '@/core/entity.js';
+import { GameMap } from '@/core/map.js';
 import type { GameState, PlayerSaveData } from '@/core/save-manager.js';
 import { Scene } from '@/core/scene.js';
-import { GameMap } from '@/core/map.js';
 
 export class Scene_1 extends Scene {
   tiledMapPath: string;
@@ -19,9 +19,7 @@ export class Scene_1 extends Scene {
   async init() {
     this.camera = new Camera(this.canvas, {
       worldWidth: 3000,
-      worldHeight: 3000,
-      mode: 'smooth',
-      zoom: 1.5
+      worldHeight: 3000
     });
 
     this.map = GameMap.map_3;

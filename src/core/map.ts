@@ -6,9 +6,10 @@ const CHUNK_SIZE = 16;
 export class GameMap {
   tileSize: number = 0;
   layers: ProcessedLayer[] = [];
-  tilesets: Map<number, SpriteSheets> = new Map();
-  private tilesetMeta: Map<number, { columns: number; tilecount: number }> = new Map();
-  tileLookup: Map<number, { spriteSheet: SpriteSheets; localId: number }> = new Map();
+  tilesets: Map<string, SpriteSheets> = new Map();
+  private tilesetMeta: Map<string, { name: string; columns: number; tilecount: number }> =
+    new Map();
+  tileLookup: Map<number, { spriteSheetName: string; localId: number }> = new Map();
   collisionGrid: Set<string> = new Set();
   objects: GameObject[] = [];
   mapWidth: number = 0;
@@ -43,12 +44,9 @@ export class GameMap {
   private buildTileLookup() {
     this.tileLookup.clear();
 
-    for (const [gid, meta] of this.tilesetMeta) {
-      const spriteSheet = this.tilesets.get(gid);
-      if (!spriteSheet?.sprite) continue;
-
+    for (const [name, meta] of this.tilesetMeta) {
       for (let localId = 0; localId < meta.tilecount; localId++) {
-        this.tileLookup.set(gid + localId, { spriteSheet, localId });
+        this.tileLookup.set(localId + 1, { spriteSheetName: name, localId });
       }
     }
   }
@@ -59,7 +57,7 @@ export class GameMap {
     const layers = this.processLayers(tiledMap.layers, tiledMap.tilewidth, tiledMap.tileheight);
     const objects = this.extractObjects(tiledMap.layers);
     const collisionGrid = this.buildCollisionGrid(layers);
-
+    console.log(layers);
     this.mapWidth = tiledMap.width * tiledMap.tilewidth;
     this.mapHeight = tiledMap.height * tiledMap.tileheight;
     this.tileSize = tiledMap.tilewidth;
@@ -72,11 +70,10 @@ export class GameMap {
 
   private processTilesets(tiledTilesets: Tiled.Tileset[]): Map<number, SpriteSheets> {
     const tilesets = new Map<number, SpriteSheets>();
-
     for (const tiledTileset of tiledTilesets) {
       const spriteSheetKey = tiledTileset.image.split('.')[0] as string;
       const spriteSheet = (SpriteSheets as unknown as Record<string, SpriteSheets>)[spriteSheetKey];
-      if (spriteSheet) tilesets.set(tiledTileset.firstgid, spriteSheet);
+      if (spriteSheet) tilesets.set(tiledTileset.name, spriteSheet);
     }
 
     return tilesets;
@@ -85,10 +82,11 @@ export class GameMap {
   private processTilesetMeta(
     tiledTilesets: Tiled.Tileset[]
   ): Map<number, { columns: number; tilecount: number }> {
-    const meta = new Map<number, { columns: number; tilecount: number }>();
+    const meta = new Map<string, { columns: number; tilecount: number }>();
 
     for (const tiledTileset of tiledTilesets) {
-      meta.set(tiledTileset.firstgid, {
+      meta.set(tiledTileset.name, {
+        name: tiledTileset.name,
         columns: tiledTileset.columns,
         tilecount: tiledTileset.tilecount
       });
@@ -322,49 +320,6 @@ export class GameMap {
     }
 
     return collisionGrid;
-  }
-
-  draw(context: ctx, camera: Camera) {
-    for (const layer of this.layers) {
-      if (!layer.visible) continue;
-      if (layer.type !== 'tilelayer') continue;
-      if (!layer.chunks) continue;
-
-      for (const chunk of layer.chunks) {
-        this.drawChunk(context, chunk, camera);
-      }
-    }
-  }
-
-  private drawChunk(context: ctx, chunk: ProcessedChunk, camera: Camera) {
-    const vw = camera.width / camera.zoom;
-    const vh = camera.height / camera.zoom;
-
-    if (
-      chunk.worldBounds.maxX < camera.x ||
-      chunk.worldBounds.minX > camera.x + vw ||
-      chunk.worldBounds.maxY < camera.y ||
-      chunk.worldBounds.minY > camera.y + vh
-    ) {
-      return;
-    }
-
-    for (let row = 0; row < chunk.height; row++) {
-      for (let col = 0; col < chunk.width; col++) {
-        const tileId = chunk.data[row]?.[col] ?? 0;
-        if (tileId > 0) {
-          const x = (chunk.x + col) * this.tileSize;
-          const y = (chunk.y + row) * this.tileSize;
-          this.drawTile(context, tileId, x, y);
-        }
-      }
-    }
-  }
-
-  private drawTile(context: ctx, tileId: number, x: number, y: number) {
-    const lookup = this.tileLookup.get(tileId);
-    if (!lookup?.spriteSheet.sprite) return;
-    lookup.spriteSheet.sprite.draw({ context, index: lookup.localId, x, y });
   }
 
   isInViewport(x: number, y: number, w: number, h: number, camera: Camera): boolean {
