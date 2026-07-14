@@ -5,8 +5,8 @@ export class SpriteSheets implements SpriteSheets {
   width: number = 0;
   height: number = 0;
   sprite_size?: number;
-  sprite_width?: number;
-  sprite_height?: number;
+  sprite_width: number;
+  sprite_height: number;
   sprite!: Sprite;
 
   static player: SpriteSheets = new SpriteSheets({
@@ -44,8 +44,7 @@ export class SpriteSheets implements SpriteSheets {
     sprite_height?: number;
   }) {
     const { src, sprite_size, sprite_width, sprite_height } = opt;
-    if (!sprite_size && (!sprite_width || !sprite_height))
-      throw new Error('Sprite size not defined');
+    if (!sprite_size) throw new Error('Sprite size not defined');
     this.spriteSheet = new Image();
     this.spriteSheet.src = src;
     this.spriteSheet.onload = () => {
@@ -53,8 +52,8 @@ export class SpriteSheets implements SpriteSheets {
       this.height = this.spriteSheet.height;
     };
     if (sprite_size !== undefined) this.sprite_size = sprite_size;
-    if (sprite_width !== undefined) this.sprite_width = sprite_width;
-    if (sprite_height !== undefined) this.sprite_height = sprite_height;
+    this.sprite_width = sprite_width ?? sprite_size;
+    this.sprite_height = sprite_height ?? sprite_size;
   }
 
   async init() {
