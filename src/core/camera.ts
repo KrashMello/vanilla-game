@@ -9,12 +9,12 @@ export class Camera {
 
   worldWidth: number | null = null;
   worldHeight: number | null = null;
-  mode: CameraMode = 'smooth';
+  mode: CameraMode = 'instant';
   playerMode: PlayerMode = 'centered';
   lerpFactor: number = 0.1;
   deadZone: DeadZone = { x: 0, y: 0, width: 100, height: 80 };
   offset: { x: number; y: number } = { x: 0, y: 0 };
-  zoom: number = 1.0;
+  zoom: number = 2;
 
   constructor(canvas: HTMLCanvasElement, options?: CameraOptions) {
     this.width = canvas.width;
@@ -26,7 +26,7 @@ export class Camera {
       if (options.playerMode) this.playerMode = options.playerMode;
       if (options.lerpFactor !== undefined) this.lerpFactor = options.lerpFactor;
       if (options.deadZone) this.deadZone = options.deadZone;
-      if (options.zoom !== undefined) this.zoom = options.zoom;
+      if (options.zoom !== undefined) this.zoom = Math.ceil(options.zoom);
     }
   }
 
@@ -35,7 +35,7 @@ export class Camera {
   }
 
   setZoom(value: number) {
-    this.zoom = Math.max(0.25, Math.min(4.0, value));
+    this.zoom = Math.ceil(value);
   }
 
   update() {
@@ -79,7 +79,7 @@ export class Camera {
       }
     }
 
-    this.clampToBounds();
+    // this.clampToBounds();
   }
 
   clampToBounds() {
@@ -99,13 +99,10 @@ export class Camera {
 
   apply(ctx: CanvasRenderingContext2D) {
     ctx.save();
-    ctx.translate(this.width / 2, this.height / 2);
+    ctx.translate(this.width / this.zoom, this.height / this.zoom);
     ctx.scale(this.zoom, this.zoom);
-    ctx.translate(-this.width / 2, -this.height / 2);
-    const snap = 1 / this.zoom;
-    const snappedX = Math.round(this.x / snap) * snap;
-    const snappedY = Math.round(this.y / snap) * snap;
-    ctx.translate(-snappedX, -snappedY);
+    ctx.translate(-this.width / this.zoom, -this.height / this.zoom);
+    ctx.translate(-this.x, -this.y);
   }
 
   restore(ctx: CanvasRenderingContext2D) {

@@ -21,6 +21,9 @@ export class Engine {
     if (!this.canvas) throw new Error('Canvas not found');
     this.ctx = this.canvas.getContext('2d') as ctx;
     this.ctx.imageSmoothingEnabled = false;
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
     this.width = this.canvas.width = window.innerWidth;
     this.height = this.canvas.height = window.innerHeight;
     this.FRAME_INTERVAL = 1000 / this.UPS;
