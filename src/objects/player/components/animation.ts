@@ -22,7 +22,7 @@ export class AnimationComponent extends Component {
     this.frames = frames;
   }
 
-  update(opt: ObjectUpdateOptions) {
+  update(deltaTime: number) {
     const dir = this.entity.direction;
     if (dir !== this.lastDirection) {
       this.lastDirection = dir;
@@ -35,7 +35,7 @@ export class AnimationComponent extends Component {
       }
     }
 
-    this.animation_timer += opt.deltaTime;
+    this.animation_timer += deltaTime;
     if (this.animation_timer > 1000 / this.sprite_fps) {
       this.animation_timer -= 1000 / this.sprite_fps;
       this.sprite_counter++;
