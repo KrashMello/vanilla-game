@@ -57,7 +57,6 @@ export class GameMap {
     const layers = this.processLayers(tiledMap.layers, tiledMap.tilewidth, tiledMap.tileheight);
     const objects = this.extractObjects(tiledMap.layers);
     const collisionGrid = this.buildCollisionGrid(layers);
-    console.log(layers);
     this.mapWidth = tiledMap.width * tiledMap.tilewidth;
     this.mapHeight = tiledMap.height * tiledMap.tileheight;
     this.tileSize = tiledMap.tilewidth;
