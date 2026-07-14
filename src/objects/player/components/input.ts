@@ -30,15 +30,5 @@ export class InputComponent extends Component {
       this.entity.speedY = this.entity.maxSpeed;
       this.entity.direction = 'down';
     }
-
-    const camera = this.entity.scene?.camera;
-    if (camera) {
-      if (input.getKey(187) || input.getKey(107)) {
-        camera.setZoom(camera.zoom + 0.1);
-      }
-      if (input.getKey(189) || input.getKey(109)) {
-        camera.setZoom(camera.zoom - 0.1);
-      }
-    }
   }
 }
