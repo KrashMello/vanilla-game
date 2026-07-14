@@ -12,10 +12,6 @@ interface Engine {
   height: number;
   lastTime: number;
   FRAME_INTERVAL: number;
-  object: any[];
-  input: InputHandler;
+  game: Game;
   start(): Promise<void>;
-  update(deltaTime: number): Promise<void>;
-  draw(): Promise<void>;
-  run(time: number): Promise<void>;
 }

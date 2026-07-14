@@ -10,17 +10,16 @@ export class InputHandler {
   JUMP: boolean = false;
   private static instance: InputHandler | null;
   constructor() {
-    window.addEventListener('keydown', e => {
+    window.addEventListener('keydown', (e) => {
       this.setKey(e.keyCode, true);
     });
 
-    window.addEventListener('keyup', e => {
+    window.addEventListener('keyup', (e) => {
       this.setKey(e.keyCode, false);
     });
   }
   static getInstance(): InputHandler {
-    if (!InputHandler.instance)
-      InputHandler.instance = new InputHandler();
+    if (!InputHandler.instance) InputHandler.instance = new InputHandler();
     return InputHandler.instance;
   }
   setKey(key: number, value: boolean) {

@@ -1,45 +1,48 @@
 export class Sprite implements Sprite {
-  size?: number
+  size?: number;
   width?: number;
   height?: number;
-  max_column: number = 0;
-  max_row: number = 0;
+  maxColumns: number = 0;
+  maxRows: number = 0;
   spriteSheet: HTMLImageElement;
-  constructor(spriteSheet: HTMLImageElement, opt: { size?: number, width?: number, height?: number }) {
+  constructor(
+    spriteSheet: HTMLImageElement,
+    opt: { size?: number; width?: number; height?: number }
+  ) {
     const { size, width, height } = opt;
-    if (!size && (!width || !height))
-      throw new Error('Sprite size not defined');
-    this.size = size;
-    this.width = width;
-    this.height = height;
+    if (!size && (!width || !height)) throw new Error('Sprite size not defined');
+    if (size !== undefined) this.size = size;
+    if (width !== undefined) this.width = width;
+    if (height !== undefined) this.height = height;
     this.spriteSheet = spriteSheet;
   }
-  get maxColumns(): number {
-    if (!this.size || !this.width)
-      return 0
-    return Math.floor(this.spriteSheet.width / (this.width ?? this.size));
+  get maxColumnsCalc(): number {
+    const w = this.width ?? this.size;
+    if (!w || this.spriteSheet.width === 0) return 0;
+    return Math.floor(this.spriteSheet.width / w);
   }
-  get maxRows(): number {
-    if (this.spriteSheet.height === 0) return 0;
-    if (!this.size || !this.height)
-      return 0
-    return Math.floor(this.spriteSheet / (this.height ?? this.size));
+  get maxRowsCalc(): number {
+    const h = this.height ?? this.size;
+    if (!h || this.spriteSheet.height === 0) return 0;
+    return Math.floor(this.spriteSheet.height / h);
   }
   getSpriteData(index: number) {
-    const cols = Math.floor(this.spriteSheet.width / (this.width ?? this.size));
-    if (cols === 0 && (!this.size && (!this.width || !this.height))) {
-      return { col: 0, row: 0, x: 0, y: 0, width: 0, height: 0 };
+    const w = this.width ?? this.size ?? 0;
+    const h = this.height ?? this.size ?? 0;
+    const cols = w > 0 ? Math.floor(this.spriteSheet.width / w) : 0;
+    if (cols === 0) {
+      return { col: 0, row: 0, width: 0, height: 0 };
     }
     const col = index % cols;
     const row = Math.floor(index / cols);
     return {
-      col: col * (this.width || this.size),
-      row: row * (this.height || this.size),
-      width: (this.width || this.size),
-      height: (this.height || this.size)
+      col: col * w,
+      row: row * h,
+      width: w,
+      height: h
     };
   }
-  draw(opt: { context: ctx; index: number, x: number, y: number }) {
+  draw(opt: { context: ctx; index: number; x: number; y: number }) {
     const { context, index, x, y } = opt;
     const spriteData = this.getSpriteData(index);
     context.drawImage(
@@ -63,4 +66,3 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
     image.src = src;
   });
 }
-

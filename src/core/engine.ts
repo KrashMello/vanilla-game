@@ -1,9 +1,9 @@
-import { InputHandler } from "./inputs";
+import type { Game } from './game.js';
 
 export class Engine {
   fps: number = 0;
   UPS: number = 60;
-  frameTimer: number = 0
+  frameTimer: number = 0;
   fpsCount: number = 0;
   fpsDisplay: number = 0;
   fpsRefreshTimer: number = 0;
@@ -11,77 +11,47 @@ export class Engine {
   ctx: ctx;
   width: number;
   height: number;
-  lastTime: number;
+  lastTime: number = 0;
   FRAME_INTERVAL: number;
-  object: any[];
-  objects: Array<any> = [];
+  game: Game;
 
-  constructor() {
+  constructor(game: Game) {
+    this.game = game;
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
-    if (!this.canvas)
-      throw new Error('Canvas not found');
+    if (!this.canvas) throw new Error('Canvas not found');
     this.ctx = this.canvas.getContext('2d') as ctx;
+    this.ctx.imageSmoothingEnabled = false;
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
     this.width = this.canvas.width = window.innerWidth;
     this.height = this.canvas.height = window.innerHeight;
-    this.lastTime = 0;
     this.FRAME_INTERVAL = 1000 / this.UPS;
-    this.object = []
-  }
-  addObject(object: Object) {
-    this.object.push(object);
-  }
-  setObjects(objects: Object[]) {
-    this.object = objects;
   }
 
   async start() {
-    //NOTE: cargamos todos los objetos requeridos antes de iniciar el motor
-    await Promise.all(this.object.map((o) => o.init()));
     await this.run(0);
   }
 
-  async update(deltaTime: number) {
-    InputHandler.getInstance().update();
-    this.object.forEach((o) => o.update({ deltaTime, canvas: this.canvas, ctx: this.ctx }));
-  }
-
-  async draw() {
-    this.fps++;
-    if (!this.canvas)
-      throw new Error('Canvas not found');
-    if (!this.ctx)
-      throw new Error('Context not found');
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    if (this.width !== window.innerWidth || this.height !== window.innerHeight) {
-      this.width = this.canvas.width = window.innerWidth;
-      this.height = this.canvas.height = window.innerHeight;
-    }
-    this.object.forEach((o) => o.draw(this.ctx));
-    this.ctx.font = 'bold 20px Arial';
-    this.ctx.fillStyle = 'yellow';
-    this.ctx.fillText(`FPS:  ${this.fpsDisplay}`, 10, 30);
-
-
-  }
-
-  async run(time: number) {
-    const delta = time - this.lastTime
+  private async run(time: number) {
+    const delta = time - this.lastTime;
     this.lastTime = time;
     this.frameTimer += delta;
     this.fpsRefreshTimer += delta;
+
     if (this.fpsRefreshTimer >= this.FRAME_INTERVAL) {
-      this.update(delta)
+      this.game.update(delta);
       this.frameTimer -= this.FRAME_INTERVAL;
     }
+
     if (this.fpsRefreshTimer >= 1000) {
       this.fpsDisplay = this.fps;
       this.fps = 0;
       this.fpsRefreshTimer = 0;
     }
-    this.draw()
+
+    this.fps++;
+    this.game.draw();
     requestAnimationFrame((t) => this.run(t));
   }
-
 }
-
-

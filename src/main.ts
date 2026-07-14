@@ -1,9 +1,16 @@
+import { SaveManager } from '@/core/save-manager.js';
+
 window.addEventListener('load', async () => {
-  const { Engine } = await import('@/core/engine');
-  const { Player } = await import('@/objects/player/player');
-  const { Monster } = await import('@/objects/monster/monster');
-  const engine = new Engine();
-  const objects = [new Player(), new Monster()];
-  engine.setObjects(objects);
-  engine.start();
+  const { Game } = await import('@/core/game.js');
+  const { Scene_1 } = await import('@/scenes/scene_1.js');
+  const game = new Game();
+  const scene_1 = new Scene_1(game.engine.canvas);
+  game.addScene(scene_1);
+
+  const savedState = SaveManager.getInstance().load();
+  if (savedState) {
+    scene_1.restoreSaveData(savedState);
+  }
+
+  game.start();
 });
