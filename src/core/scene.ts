@@ -71,14 +71,15 @@ export class Scene {
   }
 
   private drawChunk(context: ctx, chunk: ProcessedChunk) {
-    const vw = this.camera.width / this.camera.zoom;
-    const vh = this.camera.height / this.camera.zoom;
-
+    const camX = this.camera.x + this.camera.width / 4;
+    const camY = this.camera.y + this.camera.height / 4;
+    const vw = this.camera.width / 2;
+    const vh = this.camera.height / 2;
     if (
-      chunk.worldBounds.maxX < this.camera.x ||
-      chunk.worldBounds.minX > this.camera.x + vw ||
-      chunk.worldBounds.maxY < this.camera.y ||
-      chunk.worldBounds.minY > this.camera.y + vh
+      chunk.worldBounds.maxX < camX ||
+      chunk.worldBounds.minX > camX + vw ||
+      chunk.worldBounds.maxY < camY ||
+      chunk.worldBounds.minY > camY + vh
     ) {
       return;
     }
